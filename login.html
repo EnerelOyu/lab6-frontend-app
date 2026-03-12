@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+    <div class="container">
+        <h2>Login</h2>
+        <p>Нэвтрэх нэр нууц үгээ оруулна уу</p>
+
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Username">
+
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Password">
+
+        <button onclick="loginUser()">Login</button>
+
+        <div id="message"></div>
+
+        <div class="link-area">
+            <a href="register.html">Register</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function getXmlTagValue(xmlText, tagName) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+    const tag =
+        xmlDoc.getElementsByTagName("ns2:" + tagName)[0] ||
+        xmlDoc.getElementsByTagName(tagName)[0];
+
+    return tag ? tag.textContent : null;
+}
+
+function showMessage(text, type) {
+    const el = document.getElementById("message");
+    el.className = "message " + type;
+    el.textContent = text;
+}
+
+async function loginUser() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!username || !password) {
+        showMessage("Username болон password оруулна уу.", "error");
+        return;
+    }
+
+    const soapBody = `
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:auth="http://example.com/usersoapservice/auth">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <auth:LoginUserRequest>
+         <auth:username>${username}</auth:username>
+         <auth:password>${password}</auth:password>
+      </auth:LoginUserRequest>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+        const response = await fetch("http://localhost:8080/ws", {
+            method: "POST",
+            headers: {
+                "Content-Type": "text/xml;charset=UTF-8",
+                "SOAPAction": ""
+            },
+            body: soapBody
+        });
+
+        const text = await response.text();
+        const success = getXmlTagValue(text, "success");
+        const message = getXmlTagValue(text, "message");
+        const token = getXmlTagValue(text, "token");
+
+        if (success === "true" && token) {
+            localStorage.setItem("token", token);
+            showMessage("Нэвтрэлт амжилттай.", "success");
+
+            setTimeout(() => {
+                window.location.href = "profile.html";
+            }, 800);
+        } else {
+            showMessage(message || "Нэвтрэх үед алдаа гарлаа.", "error");
+        }
+    } catch (error) {
+        showMessage("Сервертэй холбогдох үед алдаа гарлаа.", "error");
+    }
+}
+</script>
+</body>
+</html>
