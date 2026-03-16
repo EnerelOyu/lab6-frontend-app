@@ -80,9 +80,15 @@ async function loginUser() {
         const success = getXmlTagValue(text, "success");
         const message = getXmlTagValue(text, "message");
         const token = getXmlTagValue(text, "token");
+        const userId = getXmlTagValue(text, "userId");
 
         if (success === "true" && token) {
             localStorage.setItem("token", token);
+
+            if (userId) {
+                localStorage.setItem("userId", userId);
+            }
+
             showMessage("Нэвтрэлт амжилттай.", "success");
 
             setTimeout(() => {

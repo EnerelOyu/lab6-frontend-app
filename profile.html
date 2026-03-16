@@ -12,7 +12,10 @@
         <div id="tokenStatus" class="message success">Token loaded</div>
 
         <label for="id">ID</label>
-        <input type="number" id="id" placeholder="ID">
+        <input type="number" id="id" placeholder="ID" readonly>
+
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Username" readonly>
 
         <label for="name">Name</label>
         <input type="text" id="name" placeholder="Name">
@@ -27,15 +30,12 @@
         <input type="text" id="phone" placeholder="Phone">
 
         <div class="button-row">
-            <button onclick="createUser()">Profile үүсгэх</button>
             <button onclick="updateUser()">Profile шинэчлэх</button>
+            <button class="secondary-btn" onclick="logout()">Logout</button>
         </div>
 
-        <button class="secondary-btn" onclick="logout()">Logout</button>
-
         <div id="message"></div>
-
-        <div id="result" class="info-box">Энд үр дүн харагдана.</div>
+        <div id="result" class="info-box" style="display: none;"></div>
     </div>
 </div>
 
@@ -46,6 +46,10 @@ function getToken() {
     return localStorage.getItem("token");
 }
 
+function getUserId() {
+    return localStorage.getItem("userId");
+}
+
 function showMessage(text, type) {
     const el = document.getElementById("message");
     el.className = "message " + type;
@@ -53,7 +57,7 @@ function showMessage(text, type) {
 }
 
 function showResult(text) {
-    document.getElementById("result").textContent = text;
+    document.getElementById("result").textContent=text;
 }
 
 function updateTokenStatus() {
@@ -81,7 +85,7 @@ function getHeaders(withJson = false) {
 
 function getFormData() {
     return {
-        id: parseInt(document.getElementById("id").value),
+        username: document.getElementById("username").value,
         name: document.getElementById("name").value,
         email: document.getElementById("email").value,
         bio: document.getElementById("bio").value,
@@ -89,59 +93,53 @@ function getFormData() {
     };
 }
 
-async function createUser() {
+async function loadMyProfile() {
     try {
-        const user = getFormData();
+        const userId = getUserId();
 
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: getHeaders(true),
-            body: JSON.stringify(user)
-        });
-
-        const text = await response.text();
-
-        if (response.ok) {
-            showMessage("Profile амжилттай үүслээ.", "success");
-        } else {
-            showMessage("Profile үүсгэх үед алдаа гарлаа.", "error");
+        if (!userId) {
+            showMessage("userId олдсонгүй. Дахин login хийнэ үү.", "error");
+            return;
         }
 
-        showResult(text);
-    } catch (error) {
-        showMessage("Create request амжилтгүй боллоо.", "error");
-    }
-}
-
-async function getUser() {
-    try {
-        const id = document.getElementById("id").value;
-
-        const response = await fetch(`${API_URL}/${id}`, {
+        const response = await fetch(`${API_URL}/${userId}`, {
             method: "GET",
             headers: getHeaders(false)
         });
 
-        const text = await response.text();
-
-        if (response.ok) {
-            showMessage("Profile амжилттай уншигдлаа.", "success");
-        } else {
-            showMessage("Profile олдсонгүй эсвэл алдаа гарлаа.", "error");
+        if (!response.ok) {
+            showMessage("Profile олдсонгүй.", "error");
+            return;
         }
 
-        showResult(text);
+        const user = await response.json();
+
+        document.getElementById("id").value = user.id || "";
+        document.getElementById("username").value = user.username || "";
+        document.getElementById("name").value = user.name || "";
+        document.getElementById("email").value = user.email || "";
+        document.getElementById("bio").value = user.bio || "";
+        document.getElementById("phone").value = user.phone || "";
+
+        showMessage("Profile амжилттай ачаалагдлаа.", "success");
+        showResult(JSON.stringify(user, null, 2));
     } catch (error) {
-        showMessage("Get request амжилтгүй боллоо.", "error");
+        showMessage("Profile ачаалах үед алдаа гарлаа.", "error");
     }
 }
 
 async function updateUser() {
     try {
-        const id = document.getElementById("id").value;
+        const userId = getUserId();
+
+        if (!userId) {
+            showMessage("userId олдсонгүй. Дахин login хийнэ үү.", "error");
+            return;
+        }
+
         const user = getFormData();
 
-        const response = await fetch(`${API_URL}/${id}`, {
+        const response = await fetch(`${API_URL}/${userId}`, {
             method: "PUT",
             headers: getHeaders(true),
             body: JSON.stringify(user)
@@ -151,41 +149,20 @@ async function updateUser() {
 
         if (response.ok) {
             showMessage("Profile амжилттай шинэчлэгдлээ.", "success");
+            showResult(text);
+            loadMyProfile();
         } else {
             showMessage("Profile шинэчлэх үед алдаа гарлаа.", "error");
+            showResult(text);
         }
-
-        showResult(text);
     } catch (error) {
         showMessage("Update request амжилтгүй боллоо.", "error");
     }
 }
 
-async function deleteUser() {
-    try {
-        const id = document.getElementById("id").value;
-
-        const response = await fetch(`${API_URL}/${id}`, {
-            method: "DELETE",
-            headers: getHeaders(false)
-        });
-
-        const text = await response.text();
-
-        if (response.ok) {
-            showMessage("Profile амжилттай устлаа.", "success");
-        } else {
-            showMessage("Profile устгах үед алдаа гарлаа.", "error");
-        }
-
-        showResult(text);
-    } catch (error) {
-        showMessage("Delete request амжилтгүй боллоо.", "error");
-    }
-}
-
 function logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
     window.location.href = "login.html";
 }
 
@@ -193,6 +170,7 @@ if (!getToken()) {
     window.location.href = "login.html";
 } else {
     updateTokenStatus();
+    loadMyProfile();
 }
 </script>
 </body>
