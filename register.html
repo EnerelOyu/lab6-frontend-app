@@ -95,7 +95,7 @@ async function registerUser() {
 </soapenv:Envelope>`;
 
     try {
-        // 1. SOAP register
+        // SOAP register
         const soapRegisterResponse = await fetch("http://localhost:8080/ws", {
             method: "POST",
             headers: {
@@ -113,7 +113,7 @@ async function registerUser() {
             return;
         }
 
-        // 2. SOAP login -> token авах
+        // SOAP login -> token авах
         const soapLoginResponse = await fetch("http://localhost:8080/ws", {
             method: "POST",
             headers: {
@@ -131,7 +131,7 @@ async function registerUser() {
             return;
         }
 
-        // 3. JSON profile create -> generated id
+        // JSON profile create -> generated id
         const jsonResponse = await fetch("http://localhost:8081/users", {
             method: "POST",
             headers: {
@@ -156,7 +156,7 @@ async function registerUser() {
         const savedUser = await jsonResponse.json();
         const userId = savedUser.id;
 
-        // 4. SOAP link profile id
+        // SOAP link profile id
         const linkSoapBody = `
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:auth="http://example.com/usersoapservice/auth">
@@ -185,7 +185,7 @@ async function registerUser() {
             return;
         }
 
-        // 5. localStorage-д хадгалах
+        // localStorage-д хадгалах
         localStorage.setItem("token", token);
         localStorage.setItem("userId", userId);
 

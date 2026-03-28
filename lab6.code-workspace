@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "lab6",
+			"path": "../../../eclipse-workspace/lab6"
+		},
+		{
+			"name": "frontend-app",
+			"path": "."
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "frontend-app"
+	}
+}
