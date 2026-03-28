@@ -40,17 +40,6 @@
 </div>
 
 <script>
-function getXmlTagValue(xmlText, tagName) {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-    const tag =
-        xmlDoc.getElementsByTagName("ns2:" + tagName)[0] ||
-        xmlDoc.getElementsByTagName(tagName)[0];
-
-    return tag ? tag.textContent : null;
-}
-
 function showMessage(text, type) {
     const el = document.getElementById("message");
     el.className = "message " + type;
@@ -70,76 +59,15 @@ async function registerUser() {
         return;
     }
 
-    const registerSoapBody = `
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:auth="http://example.com/usersoapservice/auth">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <auth:RegisterUserRequest>
-         <auth:username>${username}</auth:username>
-         <auth:password>${password}</auth:password>
-      </auth:RegisterUserRequest>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
-    const loginSoapBody = `
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:auth="http://example.com/usersoapservice/auth">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <auth:LoginUserRequest>
-         <auth:username>${username}</auth:username>
-         <auth:password>${password}</auth:password>
-      </auth:LoginUserRequest>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
     try {
-        // SOAP register
-        const soapRegisterResponse = await fetch("http://157.245.49.6:8080/ws", {
+        const response = await fetch("https://user-json-service-4svlc.ondigitalocean.app/auth/register", {
             method: "POST",
             headers: {
-                "Content-Type": "text/xml;charset=UTF-8"
-            },
-            body: registerSoapBody
-        });
-
-        const soapRegisterText = await soapRegisterResponse.text();
-        const registerSuccess = getXmlTagValue(soapRegisterText, "success");
-        const registerMessage = getXmlTagValue(soapRegisterText, "message");
-
-        if (registerSuccess !== "true") {
-            showMessage(registerMessage || "SOAP бүртгэл амжилтгүй.", "error");
-            return;
-        }
-
-        // SOAP login -> token авах
-        const soapLoginResponse = await fetch("http://157.245.49.6:8080/ws", {
-            method: "POST",
-            headers: {
-                "Content-Type": "text/xml;charset=UTF-8"
-            },
-            body: loginSoapBody
-        });
-
-        const soapLoginText = await soapLoginResponse.text();
-        const loginSuccess = getXmlTagValue(soapLoginText, "success");
-        const token = getXmlTagValue(soapLoginText, "token");
-
-        if (loginSuccess !== "true" || !token) {
-            showMessage("Register амжилттай болсон ч login хийхэд алдаа гарлаа.", "error");
-            return;
-        }
-
-        // JSON profile create -> generated id
-        const jsonResponse = await fetch("https://user-json-service-4svlc.ondigitalocean.app/users", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 username,
+                password,
                 name,
                 email,
                 bio,
@@ -147,57 +75,26 @@ async function registerUser() {
             })
         });
 
-        if (!jsonResponse.ok) {
-            const errorText = await jsonResponse.text();
-            showMessage("Profile үүсгэх үед алдаа гарлаа: " + errorText, "error");
+        if (!response.ok) {
+            const errorText = await response.text();
+            showMessage("Бүртгүүлэх үед алдаа гарлаа: " + errorText, "error");
             return;
         }
 
-        const savedUser = await jsonResponse.json();
-        const userId = savedUser.id;
+        const result = await response.json();
 
-        // SOAP link profile id
-        const linkSoapBody = `
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:auth="http://example.com/usersoapservice/auth">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <auth:LinkUserProfileRequest>
-         <auth:username>${username}</auth:username>
-         <auth:userId>${userId}</auth:userId>
-      </auth:LinkUserProfileRequest>
-   </soapenv:Body>
-</soapenv:Envelope>`;
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("userId", result.userId);
 
-        const linkResponse = await fetch("http://157.245.49.6:8080/ws", {
-            method: "POST",
-            headers: {
-                "Content-Type": "text/xml;charset=UTF-8"
-            },
-            body: linkSoapBody
-        });
-
-        const linkText = await linkResponse.text();
-        const linkSuccess = getXmlTagValue(linkText, "success");
-
-        if (linkSuccess !== "true") {
-            showMessage("Profile ID холбоход алдаа гарлаа.", "error");
-            return;
-        }
-
-        // localStorage-д хадгалах
-        localStorage.setItem("token", token);
-        localStorage.setItem("userId", userId);
-
-        showMessage(`Амжилттай бүртгэгдлээ. Generated ID: ${userId}`, "success");
+        showMessage(`Амжилттай бүртгэгдлээ. Generated ID: ${result.userId}`, "success");
 
         setTimeout(() => {
             window.location.href = "profile.html";
         }, 1000);
 
     } catch (error) {
-        showMessage("Сервертэй холбогдох үед алдаа гарлаа.", "error");
         console.error(error);
+        showMessage("Сервертэй холбогдох үед алдаа гарлаа.", "error");
     }
 }
 </script>
