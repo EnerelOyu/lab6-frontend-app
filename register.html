@@ -96,7 +96,7 @@ async function registerUser() {
 
     try {
         // SOAP register
-        const soapRegisterResponse = await fetch("http://localhost:8080/ws", {
+        const soapRegisterResponse = await fetch("http://157.245.49.6:8080/ws", {
             method: "POST",
             headers: {
                 "Content-Type": "text/xml;charset=UTF-8"
@@ -114,7 +114,7 @@ async function registerUser() {
         }
 
         // SOAP login -> token авах
-        const soapLoginResponse = await fetch("http://localhost:8080/ws", {
+        const soapLoginResponse = await fetch("http://157.245.49.6:8080/ws", {
             method: "POST",
             headers: {
                 "Content-Type": "text/xml;charset=UTF-8"
@@ -132,7 +132,7 @@ async function registerUser() {
         }
 
         // JSON profile create -> generated id
-        const jsonResponse = await fetch("http://localhost:8081/users", {
+        const jsonResponse = await fetch("https://user-json-service-4svlc.ondigitalocean.app/users", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -169,7 +169,7 @@ async function registerUser() {
    </soapenv:Body>
 </soapenv:Envelope>`;
 
-        const linkResponse = await fetch("http://localhost:8080/ws", {
+        const linkResponse = await fetch("http://157.245.49.6:8080/ws", {
             method: "POST",
             headers: {
                 "Content-Type": "text/xml;charset=UTF-8"

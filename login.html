@@ -67,7 +67,7 @@ async function loginUser() {
 </soapenv:Envelope>`;
 
     try {
-        const response = await fetch("http://localhost:8080/ws", {
+        const response = await fetch("http://157.245.49.6:8080/ws", {
             method: "POST",
             headers: {
                 "Content-Type": "text/xml;charset=UTF-8",
