@@ -28,17 +28,6 @@
 </div>
 
 <script>
-function getXmlTagValue(xmlText, tagName) {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-    const tag =
-        xmlDoc.getElementsByTagName("ns2:" + tagName)[0] ||
-        xmlDoc.getElementsByTagName(tagName)[0];
-
-    return tag ? tag.textContent : null;
-}
-
 function showMessage(text, type) {
     const el = document.getElementById("message");
     el.className = "message " + type;
@@ -54,50 +43,40 @@ async function loginUser() {
         return;
     }
 
-    const soapBody = `
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:auth="http://example.com/usersoapservice/auth">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <auth:LoginUserRequest>
-         <auth:username>${username}</auth:username>
-         <auth:password>${password}</auth:password>
-      </auth:LoginUserRequest>
-   </soapenv:Body>
-</soapenv:Envelope>`;
-
     try {
-        const response = await fetch("http://157.245.49.6:8080/ws", {
+        const response = await fetch("https://user-json-service-4svlc.ondigitalocean.app/auth/login", {
             method: "POST",
             headers: {
-                "Content-Type": "text/xml;charset=UTF-8",
-                "SOAPAction": ""
+                "Content-Type": "application/json"
             },
-            body: soapBody
+            body: JSON.stringify({
+                username,
+                password
+            })
         });
 
-        const text = await response.text();
-        const success = getXmlTagValue(text, "success");
-        const message = getXmlTagValue(text, "message");
-        const token = getXmlTagValue(text, "token");
-        const userId = getXmlTagValue(text, "userId");
-
-        if (success === "true" && token) {
-            localStorage.setItem("token", token);
-
-            if (userId) {
-                localStorage.setItem("userId", userId);
-            }
-
-            showMessage("Нэвтрэлт амжилттай.", "success");
-
-            setTimeout(() => {
-                window.location.href = "profile.html";
-            }, 800);
-        } else {
-            showMessage(message || "Нэвтрэх үед алдаа гарлаа.", "error");
+        if (!response.ok) {
+            const errorText = await response.text();
+            showMessage(errorText || "Нэвтрэх үед алдаа гарлаа.", "error");
+            return;
         }
+
+        const result = await response.json();
+
+        localStorage.setItem("token", result.token);
+
+        if (result.userId) {
+            localStorage.setItem("userId", result.userId);
+        }
+
+        showMessage("Нэвтрэлт амжилттай.", "success");
+
+        setTimeout(() => {
+            window.location.href = "profile.html";
+        }, 800);
+
     } catch (error) {
+        console.error(error);
         showMessage("Сервертэй холбогдох үед алдаа гарлаа.", "error");
     }
 }
