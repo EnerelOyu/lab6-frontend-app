@@ -29,6 +29,19 @@
         <label for="phone">Phone</label>
         <input type="text" id="phone" placeholder="Phone">
 
+        <label for="profileImage">Profile Image</label>
+        <input type="file" id="profileImage" accept="image/*">
+
+        <div class="button-row">
+            <button type="button" onclick="uploadImage()">Зураг upload</button>
+        </div>
+
+        <input type="text" id="imageUrl" placeholder="Image URL" readonly>
+
+        <div id="imagePreviewBox" style="margin-top:10px;">
+            <img id="imagePreview" src="" alt="Profile Image" style="max-width: 200px; display: none; border-radius: 8px;">
+        </div>
+
         <div class="button-row">
             <button onclick="updateUser()">Profile шинэчлэх</button>
             <button class="secondary-btn" onclick="logout()">Logout</button>
@@ -41,6 +54,7 @@
 
 <script>
 const API_URL = "https://user-json-service-4svlc.ondigitalocean.app/users";
+const FILE_API_URL = "http://localhost:8082/files/upload";
 
 function getToken() {
     return localStorage.getItem("token");
@@ -89,8 +103,47 @@ function getFormData() {
         name: document.getElementById("name").value,
         email: document.getElementById("email").value,
         bio: document.getElementById("bio").value,
-        phone: document.getElementById("phone").value
+        phone: document.getElementById("phone").value,
+        imageUrl: document.getElementById("imageUrl").value
     };
+}
+
+async function uploadImage() {
+    try {
+        const fileInput = document.getElementById("profileImage");
+        const file = fileInput.files[0];
+
+        if (!file) {
+            showMessage("Эхлээд зураг сонгоно уу.", "error");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(FILE_API_URL, {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            showMessage("Зураг upload хийхэд алдаа гарлаа.", "error");
+            return;
+        }
+
+        document.getElementById("imageUrl").value = result.url;
+
+        const preview = document.getElementById("imagePreview");
+        preview.src = result.url;
+        preview.style.display = "block";
+
+        showMessage("Зураг амжилттай upload хийгдлээ. Одоо Profile шинэчлэх дарна уу.", "success");
+    } catch (error) {
+        console.error(error);
+        showMessage("Upload хийх үед алдаа гарлаа.", "error");
+    }
 }
 
 async function loadMyProfile() {
@@ -113,6 +166,17 @@ async function loadMyProfile() {
         }
 
         const user = await response.json();
+
+        document.getElementById("imageUrl").value = user.imageUrl || "";
+
+        const preview = document.getElementById("imagePreview");
+        if (user.imageUrl) {
+            preview.src = user.imageUrl;
+            preview.style.display = "block";
+        } else {
+            preview.src = "";
+            preview.style.display = "none";
+        }
 
         document.getElementById("id").value = user.id || "";
         document.getElementById("username").value = user.username || "";
@@ -163,11 +227,11 @@ async function updateUser() {
 function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
-    window.location.href = "login.html";
+    window.location.href = "index.html";
 }
 
 if (!getToken()) {
-    window.location.href = "login.html";
+    window.location.href = "index.html";
 } else {
     updateTokenStatus();
     loadMyProfile();
