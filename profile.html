@@ -4,18 +4,127 @@
     <meta charset="UTF-8">
     <title>Profile</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar-wrapper {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            border: 3px solid #d0d7de;
+        }
+
+        .avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .avatar-placeholder {
+            font-size: 36px;
+            color: #9ca3af;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
+            margin-bottom: 6px;
+        }
+
+        .upload-label:hover {
+            background: #e5e7eb;
+        }
+
+        #profileImage {
+            display: none;
+        }
+
+        .upload-btn {
+            width: auto;
+            padding: 8px 20px;
+            font-size: 13px;
+            margin-top: 6px;
+            background: #2563eb;
+        }
+
+        .readonly-field {
+            background: #f9fafb;
+            color: #6b7280;
+        }
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 16px 0;
+        }
+
+        .token-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+
+        .token-badge.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .token-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
 </head>
 <body>
 <div class="page">
     <div class="container">
         <h2>Profile</h2>
-        <div id="tokenStatus" class="message success">Token loaded</div>
+
+        <div id="tokenStatus" class="token-badge success">&#10003; Token loaded</div>
+
+        <!-- Avatar -->
+        <div class="profile-avatar-section">
+            <div class="avatar-wrapper">
+                <img id="imagePreview" src="" alt="Profile Image">
+                <span class="avatar-placeholder" id="avatarPlaceholder">&#128100;</span>
+            </div>
+
+            <label class="upload-label" for="profileImage">&#128247; Зураг сонгох</label>
+            <input type="file" id="profileImage" accept="image/*">
+            <button class="upload-btn" type="button" onclick="uploadImage()">Upload</button>
+        </div>
+
+        <input type="hidden" id="imageUrl">
+
+        <hr class="section-divider">
 
         <label for="id">ID</label>
-        <input type="number" id="id" placeholder="ID" readonly>
+        <input class="readonly-field" type="number" id="id" placeholder="ID" readonly>
 
         <label for="username">Username</label>
-        <input type="text" id="username" placeholder="Username" readonly>
+        <input class="readonly-field" type="text" id="username" placeholder="Username" readonly>
 
         <label for="name">Name</label>
         <input type="text" id="name" placeholder="Name">
@@ -28,19 +137,6 @@
 
         <label for="phone">Phone</label>
         <input type="text" id="phone" placeholder="Phone">
-
-        <label for="profileImage">Profile Image</label>
-        <input type="file" id="profileImage" accept="image/*">
-
-        <div class="button-row">
-            <button type="button" onclick="uploadImage()">Зураг upload</button>
-        </div>
-
-        <input type="text" id="imageUrl" placeholder="Image URL" readonly>
-
-        <div id="imagePreviewBox" style="margin-top:10px;">
-            <img id="imagePreview" src="" alt="Profile Image" style="max-width: 200px; display: none; border-radius: 8px;">
-        </div>
 
         <div class="button-row">
             <button onclick="updateUser()">Profile шинэчлэх</button>
@@ -77,10 +173,10 @@ function showResult(text) {
 function updateTokenStatus() {
     const tokenStatus = document.getElementById("tokenStatus");
     if (getToken()) {
-        tokenStatus.className = "message success";
-        tokenStatus.textContent = "Token loaded";
+        tokenStatus.className = "token-badge success";
+        tokenStatus.textContent = "✓ Token loaded";
     } else {
-        tokenStatus.className = "message error";
+        tokenStatus.className = "token-badge error";
         tokenStatus.textContent = "Token байхгүй. Login хийнэ үү.";
     }
 }
@@ -106,6 +202,20 @@ function getFormData() {
         phone: document.getElementById("phone").value,
         imageUrl: document.getElementById("imageUrl").value
     };
+}
+
+function setAvatarPreview(url) {
+    const preview = document.getElementById("imagePreview");
+    const placeholder = document.getElementById("avatarPlaceholder");
+    if (url) {
+        preview.src = url;
+        preview.style.display = "block";
+        placeholder.style.display = "none";
+    } else {
+        preview.src = "";
+        preview.style.display = "none";
+        placeholder.style.display = "block";
+    }
 }
 
 async function uploadImage() {
@@ -134,10 +244,7 @@ async function uploadImage() {
         }
 
         document.getElementById("imageUrl").value = result.url;
-
-        const preview = document.getElementById("imagePreview");
-        preview.src = result.url;
-        preview.style.display = "block";
+        setAvatarPreview(result.url);
 
         showMessage("Зураг амжилттай upload хийгдлээ. Одоо Profile шинэчлэх дарна уу.", "success");
     } catch (error) {
@@ -168,15 +275,7 @@ async function loadMyProfile() {
         const user = await response.json();
 
         document.getElementById("imageUrl").value = user.imageUrl || "";
-
-        const preview = document.getElementById("imagePreview");
-        if (user.imageUrl) {
-            preview.src = user.imageUrl;
-            preview.style.display = "block";
-        } else {
-            preview.src = "";
-            preview.style.display = "none";
-        }
+        setAvatarPreview(user.imageUrl);
 
         document.getElementById("id").value = user.id || "";
         document.getElementById("username").value = user.username || "";

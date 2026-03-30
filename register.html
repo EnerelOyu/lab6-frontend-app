@@ -4,20 +4,66 @@
     <meta charset="UTF-8">
     <title>Register</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 14px;
+        }
+
+        .form-row .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-row label {
+            margin-top: 12px;
+        }
+
+        .required-mark {
+            color: #dc2626;
+            margin-left: 2px;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .register-header h2 {
+            margin-bottom: 4px;
+        }
+
+        .register-header p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .submit-btn {
+            margin-top: 16px;
+        }
+    </style>
 </head>
 <body>
 <div class="page">
     <div class="container">
-        <h2>Register</h2>
-        <p>Шинэ хэрэглэгчээр бүртгүүлэх</p>
+        <div class="register-header">
+            <h2>Register</h2>
+            <p>Шинэ хэрэглэгчээр бүртгүүлэх</p>
+        </div>
 
-        <label for="username">Username</label>
-        <input type="text" id="username" placeholder="Username">
+        <div class="form-row">
+            <div class="field">
+                <label for="username">Username <span class="required-mark">*</span></label>
+                <input type="text" id="username" placeholder="Username">
+            </div>
+            <div class="field">
+                <label for="password">Password <span class="required-mark">*</span></label>
+                <input type="password" id="password" placeholder="Password">
+            </div>
+        </div>
 
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Password">
-
-        <label for="name">Name</label>
+        <label for="name">Name <span class="required-mark">*</span></label>
         <input type="text" id="name" placeholder="Name">
 
         <label for="email">Email</label>
@@ -29,12 +75,12 @@
         <label for="phone">Phone</label>
         <input type="text" id="phone" placeholder="Phone">
 
-        <button onclick="registerUser()">Register</button>
+        <button class="submit-btn" onclick="registerUser()">Бүртгүүлэх</button>
 
         <div id="message"></div>
 
         <div class="link-area">
-            <a href="login.html">Login</a>
+            Бүртгэлтэй юу? <a href="index.html">Нэвтрэх</a>
         </div>
     </div>
 </div>
