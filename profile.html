@@ -228,23 +228,49 @@ async function uploadImage() {
             return;
         }
 
-        const formData = new FormData();
-        formData.append("file", file);
+        //Presigned URL авах
+        showMessage("Presigned URL авч байна...", "info");
+        
+        const presignedResponse = await fetch(
+            `https://file-manager-service-jaeu9.ondigitalocean.app/files/presigned-url?fileName=${encodeURIComponent(file.name)}`,
+            {
+                method: "GET"
+            }
+        );
 
-        const response = await fetch(FILE_API_URL, {
-            method: "POST",
-            body: formData
-        });
+        const presignedData = await presignedResponse.json();
 
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-            showMessage("Зураг upload хийхэд алдаа гарлаа.", "error");
+        if (!presignedResponse.ok || !presignedData.success) {
+            showMessage("Presigned URL авах үед алдаа гарлаа.", "error");
             return;
         }
 
-        document.getElementById("imageUrl").value = result.url;
-        setAvatarPreview(result.url);
+        const presignedUrl = presignedData.presignedUrl;
+
+        //Presigned URL ашиглан файлыг шууд S3 руу upload хийх
+        showMessage("Зураг upload хийж байна...", "info");
+
+        const uploadResponse = await fetch(presignedUrl, {
+            method: "PUT",
+            body: file,
+            headers: {
+                "Content-Type": file.type
+            }
+        });
+
+        if (!uploadResponse.ok) {
+            showMessage("Zураг upload хийхэд алдаа гарлаа.", "error");
+            return;
+        }
+
+        // 3. Frontend-д URL хэмнэх
+        // Presigned URL-аас уникал файлын нэр гаргаж авах
+        const urlParts = presignedUrl.split("/");
+        const fileKey = urlParts[urlParts.length - 1].split("?")[0];
+        const imageUrlForDisplay = `https://${presignedData.bucket}/${fileKey}`;
+
+        document.getElementById("imageUrl").value = imageUrlForDisplay;
+        setAvatarPreview(imageUrlForDisplay);
 
         showMessage("Зураг амжилттай upload хийгдлээ. Одоо Profile шинэчлэх дарна уу.", "success");
     } catch (error) {
