@@ -255,7 +255,7 @@ async function uploadImage() {
 
         const userId = getUserId();
         if (userId) {
-            await fetch("https://mail-service-jaeu9.ondigitalocean.app/mail/uploaded-notif", {
+            await fetch("https://mail-service-3lsxx.ondigitalocean.app/mail/uploaded-notif", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ to: userId })
